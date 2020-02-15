@@ -1,0 +1,8 @@
+ignore:
+    - "**/__init__.py"
+    - "example_step_workflow/bin/.*"
+    - "example_step_workflow/vendor/.*"
+
+coverage:
+  status:
+    patch: off
