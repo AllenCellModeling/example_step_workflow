@@ -7,8 +7,9 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-from datastep import Step, log_run_params
 from tqdm import tqdm
+
+from datastep import Step, log_run_params
 
 ###############################################################################
 
@@ -22,6 +23,22 @@ class Raw(Step):
     def run(self, n: int = 100, m: int = 100, seed: int = 1, **kwargs) -> List[Path]:
         """
         Generates n random arrays of shape (m, m) and saves them to /matrices
+
+        Parameters
+        ----------
+        n: int
+            Number of random arrays to generate.
+            Default: 100
+        m: int
+            Squared shape of the array.
+            Default: 100 (100 x 100)
+        seed: int
+            Seed for numpy's random number generator
+
+        Returns
+        -------
+        arrays: List[Path]
+            The paths to the generated arrays.
         """
         # Configure random seed
         np.random.seed(seed=seed)

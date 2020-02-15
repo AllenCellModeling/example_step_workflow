@@ -29,7 +29,10 @@ class All:
         Set all of your available steps here.
         This is only used for data logging operations, not running.
         """
-        self.step_list = [steps.Raw()]
+        self.step_list = [
+            steps.Raw(),
+            steps.Invert(),
+        ]
 
     def run(
         self,
@@ -63,6 +66,7 @@ class All:
         """
         # Initalize steps
         raw = steps.Raw()
+        invert = steps.Invert()
 
         # Choose executor
         if debug:
@@ -76,11 +80,17 @@ class All:
             # If you want to clean the local staging directories pass clean
             # If you want to utilize some debugging functionality pass debug
             # If you don't utilize any of these, just pass the parameters you need.
-            raw(
+            matrices = raw(
                 distributed_executor_address=distributed_executor_address,
                 clean=clean,
                 debug=debug,
                 **kwargs,  # Allows us to pass `--n {some integer}` or other params
+            )
+            invert(
+                matrices,
+                distributed_executor_address=distributed_executor_address,
+                clean=clean,
+                debug=debug,
             )
 
         # Run flow and get ending state
