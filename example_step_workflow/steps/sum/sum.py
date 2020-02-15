@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from datastep import Step, log_run_params
 
-from ..raw import Raw
+from ..invert import Invert
 
 ###############################################################################
 
@@ -20,8 +20,8 @@ log = logging.getLogger(__name__)
 ###############################################################################
 
 
-class Invert(Step):
-    def __init__(self, direct_upstream_tasks: List["Step"] = [Raw]):
+class Sum(Step):
+    def __init__(self, direct_upstream_tasks: List["Step"] = [Invert]):
         super().__init__(direct_upstream_tasks=direct_upstream_tasks)
 
     @log_run_params
@@ -29,10 +29,10 @@ class Invert(Step):
         self,
         matrices: Optional[Union[Union[str, Path], List[Path]]] = None,
         filepath_column: str = "filepath",
-        **kwargs
+        **kwargs,
     ) -> List[Path]:
         """
-        Invert the list of matrices provided.
+        Sum the list of matrices provided.
 
         If running in the command line, this will lookup the prior step's produced
         manifest for matrice retrieval. If running in the workflow, uses the direct
@@ -42,8 +42,8 @@ class Invert(Step):
         ----------
         matrices: Optional[Union[Union[str, Path], List[Path]]]
             A path to a csv manifest to use or directly a list of paths of serialized
-            arrays to invert.
-            Default: self.step_local_staging_dir.parent / "raw" / manifest.csv
+            arrays to sum.
+            Default: self.step_local_staging_dir.parent / "invert" / manifest.csv
 
         filepath_column: str
             If providing a path to a csv manifest, the column to use for matrices.
@@ -51,8 +51,8 @@ class Invert(Step):
 
         Returns
         -------
-        inverted: List[Path]
-            The list of paths to the inverted matrices.
+        vectors: List[Path]
+            The list of paths to the produced vectors.
         """
         # Default matrices value
         if matrices is None:
@@ -73,29 +73,29 @@ class Invert(Step):
         self.manifest = pd.DataFrame(index=range(len(matrices)), columns=["filepath"])
 
         # Storage dir
-        inverted_dir = self.step_local_staging_dir / "inverted"
-        inverted_dir.mkdir(exist_ok=True)
+        vector_dir = self.step_local_staging_dir / "vectors"
+        vector_dir.mkdir(exist_ok=True)
 
-        # Invert the matrices
+        # Sum the matrices
         inversions = []
-        for i, matrix in tqdm(
-            enumerate(matrices), desc="Loading, inverting and saving matrices"
-        ):
+        for i, matrix in tqdm(enumerate(matrices), desc="Sum and sort matrices"):
             # Load matrix
             mat = np.load(matrix)
 
-            # Invert
-            inv = np.linalg.inv(mat)
+            # Process
+            vec = np.amax(mat, 0)
+            vec = np.sort(vec)
+            vec = np.cumsum(vec)
 
             # Configure save path and save
-            inv_save_path = inverted_dir / matrix.name
-            np.save(inv_save_path, inv)
+            vec_save_path = vector_dir / f"vector_{i}.npy"
+            np.save(vec_save_path, vec)
 
             # Add the path to manifest
-            self.manifest.at[i, "filepath"] = inv_save_path
+            self.manifest.at[i, "filepath"] = vec_save_path
 
             # Append the inversion save path to the list of inversions
-            inversions.append(inv_save_path)
+            inversions.append(vec_save_path)
 
         # Save the manifest
         self.manifest.to_csv(self.step_local_staging_dir / "manifest.csv", index=False)

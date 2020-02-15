@@ -2,5 +2,6 @@
 
 from .raw import Raw
 from .invert import Invert
+from .sum import Sum
 
-__all__ = ["Raw", "Invert"]
+__all__ = ["Raw", "Invert", "Sum"]

@@ -67,9 +67,6 @@ class Raw(Step):
             arrs.append(matrix_save_path)
 
         # Save the manifest
-        self.manifest.to_csv(
-            self.step_local_staging_dir / "manifest.csv",
-            index=False
-        )
+        self.manifest.to_csv(self.step_local_staging_dir / "manifest.csv", index=False)
 
         return arrs

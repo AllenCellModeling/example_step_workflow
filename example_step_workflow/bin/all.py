@@ -32,6 +32,7 @@ class All:
         self.step_list = [
             steps.Raw(),
             steps.Invert(),
+            steps.Sum(),
         ]
 
     def run(
@@ -67,6 +68,7 @@ class All:
         # Initalize steps
         raw = steps.Raw()
         invert = steps.Invert()
+        cumsum = steps.Sum()
 
         # Choose executor
         if debug:
@@ -86,18 +88,21 @@ class All:
                 debug=debug,
                 **kwargs,  # Allows us to pass `--n {some integer}` or other params
             )
-            invert(
+            inversions = invert(
                 matrices,
+                distributed_executor_address=distributed_executor_address,
+                clean=clean,
+                debug=debug,
+            )
+            cumsum(
+                inversions,
                 distributed_executor_address=distributed_executor_address,
                 clean=clean,
                 debug=debug,
             )
 
         # Run flow and get ending state
-        state = flow.run(executor=exe)
-
-        # Get and display any outputs you want to see on your local terminal
-        log.info(raw.get_result(state, flow))
+        flow.run(executor=exe)
 
     def pull(self):
         """
