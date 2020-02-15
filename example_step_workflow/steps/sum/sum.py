@@ -56,7 +56,7 @@ class Sum(Step):
         """
         # Default matrices value
         if matrices is None:
-            matrices = self.step_local_staging_dir.parent / "raw" / "manifest.csv"
+            matrices = self.step_local_staging_dir.parent / "invert" / "manifest.csv"
 
         # Get the matrices from the csv if provided a path
         if isinstance(matrices, (str, Path)):
@@ -77,7 +77,7 @@ class Sum(Step):
         vector_dir.mkdir(exist_ok=True)
 
         # Sum the matrices
-        inversions = []
+        sums = []
         for i, matrix in tqdm(enumerate(matrices), desc="Sum and sort matrices"):
             # Load matrix
             mat = np.load(matrix)
@@ -94,10 +94,10 @@ class Sum(Step):
             # Add the path to manifest
             self.manifest.at[i, "filepath"] = vec_save_path
 
-            # Append the inversion save path to the list of inversions
-            inversions.append(vec_save_path)
+            # Append the sum save path to the list of sums
+            sums.append(vec_save_path)
 
         # Save the manifest
         self.manifest.to_csv(self.step_local_staging_dir / "manifest.csv", index=False)
 
-        return inversions
+        return sums

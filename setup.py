@@ -41,17 +41,18 @@ dev_requirements = [
 interactive_requirements = [
     "altair",
     "jupyterlab",
-    "matplotlib",
 ]
 
 requirements = [
     "datastep>=0.1.4",
     "docutils<0.16",  # needed for botocore (quilt dependency)
     "fire",
+    "matplotlib",
     "numpy",
     "pandas",
     "prefect",
     "python-dateutil<=2.8.0",  # need <=2.8.0 for quilt3 in step
+    "seaborn",
 ]
 
 extra_requirements = {

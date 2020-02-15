@@ -33,6 +33,7 @@ class All:
             steps.Raw(),
             steps.Invert(),
             steps.Sum(),
+            steps.Plot(),
         ]
 
     def run(
@@ -69,6 +70,7 @@ class All:
         raw = steps.Raw()
         invert = steps.Invert()
         cumsum = steps.Sum()
+        plot = steps.Plot()
 
         # Choose executor
         if debug:
@@ -94,15 +96,24 @@ class All:
                 clean=clean,
                 debug=debug,
             )
-            cumsum(
+            vectors = cumsum(
                 inversions,
+                distributed_executor_address=distributed_executor_address,
+                clean=clean,
+                debug=debug,
+            )
+            plot(
+                vectors,
                 distributed_executor_address=distributed_executor_address,
                 clean=clean,
                 debug=debug,
             )
 
         # Run flow and get ending state
-        flow.run(executor=exe)
+        state = flow.run(executor=exe)
+
+        # Get plot location
+        log.info(f"Plot stored to: {plot.get_result(state, flow)}")
 
     def pull(self):
         """
