@@ -76,7 +76,7 @@ class All:
             # If you want to clean the local staging directories pass clean
             # If you want to utilize some debugging functionality pass debug
             # If you don't utilize any of these, just pass the parameters you need.
-            images = raw(
+            raw(
                 distributed_executor_address=distributed_executor_address,
                 clean=clean,
                 debug=debug,

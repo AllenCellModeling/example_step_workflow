@@ -8,7 +8,6 @@ from typing import List
 import numpy as np
 import pandas as pd
 from datastep import Step, log_run_params
-from PIL import Image
 from tqdm import tqdm
 
 ###############################################################################
@@ -19,45 +18,41 @@ log = logging.getLogger(__name__)
 
 
 class Raw(Step):
-    """
-    Example step that generates random images.
-    """
-
-    # You only need to have an __init__ if you aren't using the default values
-    # In this case, we could get rid of it but for the purposes of this example
-    # we will keep it.
-    def __init__(self, direct_upstream_tasks=[], config=None):
-        super().__init__(direct_upstream_tasks=direct_upstream_tasks, config=config)
-
     @log_run_params
-    def run(self, n: int = 10, **kwargs) -> List[Path]:
+    def run(self, n: int = 100, m: int = 100, seed: int = 1, **kwargs) -> List[Path]:
         """
-        Generate N random images and save them to /images.
+        Generates n random arrays of shape (m, m) and saves them to /matrices
         """
+        # Configure random seed
+        np.random.seed(seed=seed)
 
-        # Empty manifest to fill in -- add more columns for e.g. labels, metadata, etc.
+        # Configure manifest dataframe for storage tracking
         self.manifest = pd.DataFrame(index=range(n), columns=["filepath"])
 
-        # Subdirectory for the images
-        imdir = self.step_local_staging_dir / Path("images")
-        imdir.mkdir(parents=True, exist_ok=True)
+        # Storage dir
+        matrices_dir = self.step_local_staging_dir / "matrices"
+        matrices_dir.mkdir(exist_ok=True)
 
-        # Set seed for reproducible random images
-        np.random.seed(seed=112358)
+        # Generate random arrays
+        arrs = []
+        for i in tqdm(range(n), desc="Creating and saving matrices"):
+            # Generate random m by m array
+            x = np.random.rand(m, m)
 
-        # Create images, save them, and fill in dataframe
-        images = []
-        for i in tqdm(range(n), desc="Creating and saving images"):
-            A = np.random.rand(128, 128, 4) * 255
-            img = Image.fromarray(A.astype("uint8")).convert("RGBA")
-            path = imdir / Path(f"image_{i}.png")
-            img.save(path)
-            self.manifest.at[i, "filepath"] = path
-            images.append(path)
+            # Configure save path and save
+            matrix_save_path = matrices_dir / f"matrix_{i}.npy"
+            np.save(matrix_save_path, x)
 
-        # Save manifest as csv
+            # Add the path to the manifest
+            self.manifest.at[i, "filepath"] = matrix_save_path
+
+            # Append the array save path to the list of arrays
+            arrs.append(matrix_save_path)
+
+        # Save the manifest
         self.manifest.to_csv(
-            self.step_local_staging_dir / Path("manifest.csv"), index=False
+            self.step_local_staging_dir / "manifest.csv",
+            index=False
         )
 
-        return images
+        return arrs

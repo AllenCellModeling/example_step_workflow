@@ -17,6 +17,6 @@ from example_step_workflow.steps import Raw
 # This test just checks to see if the raw step instantiates and runs
 def test_raw_run(n=3):
     raw = Raw()
-    images = raw.run(n=n)
+    arrs = raw.run(n=n)
     assert len(raw.manifest) == n
-    assert len(images) == n
+    assert len(arrs) == n

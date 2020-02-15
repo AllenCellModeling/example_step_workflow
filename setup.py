@@ -50,7 +50,6 @@ requirements = [
     "fire",
     "numpy",
     "pandas",
-    "Pillow",
     "prefect",
     "python-dateutil<=2.8.0",  # need <=2.8.0 for quilt3 in step
 ]
@@ -81,7 +80,11 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     description="An example step workflow that does a whole bunch of simple random matrix inversion.",
-    entry_points={"console_scripts": ["example_step_workflow=example_step_workflow.bin.cli:cli"]},
+    entry_points={
+        "console_scripts": [
+            "example_step_workflow=example_step_workflow.bin.cli:cli"
+        ]
+    },
     install_requires=requirements,
     license="Allen Institute Software License",
     long_description=readme,
