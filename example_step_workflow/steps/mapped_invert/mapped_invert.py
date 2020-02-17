@@ -32,6 +32,7 @@ class MappedInvert(Step):
         inv = np.linalg.inv(mat)
 
         # Configure save path and save
+        save_dir.mkdir(parents=True, exist_ok=True)
         inv_save_path = save_dir / read_path.name
         np.save(inv_save_path, inv)
 
@@ -97,7 +98,6 @@ class MappedInvert(Step):
 
         # Storage dir
         inverted_dir = self.step_local_staging_dir / "inverted"
-        inverted_dir.mkdir(exist_ok=True)
 
         # Connect to an executor
         exe = DaskExecutor(distributed_executor_address)

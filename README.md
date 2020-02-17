@@ -17,6 +17,18 @@ By default the workflow and all sub tasks are configured to run in a single proc
 steps called `mapped_raw` and `mapped_invert` to give an idea of how to switch from single threaded / process
 to parallel data gathering and processing.
 
+## Distributed
+If you want to run this in a distributed fashion be sure install the distributed dependencies
+(`pip install -e .[distributed]`) and additionally create a `workflow_config.json` file with the following contents:
+```json
+{
+    "project_local_staging_dir": "/allen/aics/modeling/{your_name}/results/example_step_workflow/"
+}
+```
+
+_**Note:** The path your provide in the JSON file can point to wherever you want, the path simply must be available to
+all the workers._
+
 ## Installation
 `pip install git+https://github.com/AllenCellModeling/example_step_workflow.git`
 

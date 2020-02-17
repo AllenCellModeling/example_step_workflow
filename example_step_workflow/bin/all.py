@@ -30,8 +30,8 @@ class All:
         This is only used for data logging operations, not running.
         """
         self.step_list = [
-            steps.Raw(),
-            steps.Invert(),
+            steps.MappedRaw(),
+            steps.MappedInvert(),
             steps.Sum(),
             steps.Plot(),
         ]
@@ -67,8 +67,8 @@ class All:
         https://docs.prefect.io/core/
         """
         # Initalize steps
-        raw = steps.Raw()
-        invert = steps.Invert()
+        raw = steps.MappedRaw()
+        invert = steps.MappedInvert()
         cumsum = steps.Sum()
         plot = steps.Plot()
 

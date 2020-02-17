@@ -55,11 +55,16 @@ requirements = [
     "seaborn",
 ]
 
+distributed_requirements = [
+    "scheduler_tools==0.1.2",
+]
+
 extra_requirements = {
     "test": test_requirements,
     "setup": setup_requirements,
     "dev": dev_requirements,
     "interactive": interactive_requirements,
+    "distributed": distributed_requirements,
     "all": [
         *requirements,
         *test_requirements,

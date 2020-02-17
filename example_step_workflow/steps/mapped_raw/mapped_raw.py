@@ -24,6 +24,7 @@ class MappedRaw(Step):
         x = np.random.rand(m, m)
 
         # Configure save path
+        save_dir.mkdir(parents=True, exist_ok=True)
         matrix_save_path = save_dir / f"matrix_{i}.npy"
         np.save(matrix_save_path, x)
 
@@ -65,7 +66,6 @@ class MappedRaw(Step):
 
         # Storage dir
         matrices_dir = self.step_local_staging_dir / "matrices"
-        matrices_dir.mkdir(exist_ok=True)
 
         # Connect to an executor
         exe = DaskExecutor(distributed_executor_address)
