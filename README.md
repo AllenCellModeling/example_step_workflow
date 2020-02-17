@@ -7,7 +7,15 @@ An example step workflow that does a whole bunch of simple random matrix inversi
 
 ---
 
-*Edit this README and make it relevant to your project*
+## Workflow
+This example step workflow generates random matrices, inverts them, does a cumulative sum over an axis,
+the finally plots them.
+
+![DAG](docs/resources/workflow.png)
+
+By default the workflow and all sub tasks are configured to run in a single process. However, there are example
+steps called `mapped_raw` and `mapped_invert` to give an idea of how to switch from single threaded / process
+to parallel data gathering and processing.
 
 ## Installation
 `pip install git+https://github.com/AllenCellModeling/example_step_workflow.git`
@@ -20,4 +28,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the
 
 
 ***Free software: Allen Institute Software License***
-

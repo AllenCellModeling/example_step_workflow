@@ -7,9 +7,8 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-
 from datastep import Step, log_run_params
+from tqdm import tqdm
 
 from ..raw import Raw
 
@@ -44,7 +43,6 @@ class Invert(Step):
             A path to a csv manifest to use or directly a list of paths of serialized
             arrays to invert.
             Default: self.step_local_staging_dir.parent / "raw" / manifest.csv
-
         filepath_column: str
             If providing a path to a csv manifest, the column to use for matrices.
             Default: "filepath"

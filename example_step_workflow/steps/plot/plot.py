@@ -5,15 +5,16 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-
 from datastep import Step, log_run_params
+from tqdm import tqdm
 
 from ..sum import Sum
 
+matplotlib.use('agg')
 plt.style.use("seaborn-whitegrid")
 
 
