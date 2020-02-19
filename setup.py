@@ -44,7 +44,9 @@ interactive_requirements = [
 ]
 
 requirements = [
+    "dask[bag]",
     "datastep>=0.1.5",
+    "distributed",
     "docutils<0.16",  # needed for botocore (quilt dependency)
     "fire",
     "matplotlib",
@@ -70,6 +72,7 @@ extra_requirements = {
         *test_requirements,
         *setup_requirements,
         *dev_requirements,
+        *distributed_requirements,
         *interactive_requirements
     ]
 }

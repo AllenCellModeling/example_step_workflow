@@ -3,12 +3,12 @@
 
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from datastep import Step, log_run_params
-from prefect.engine.executors import DaskExecutor
+from distributed import worker_client
 
 ###############################################################################
 
@@ -31,14 +31,7 @@ class MappedRaw(Step):
         return i, matrix_save_path
 
     @log_run_params
-    def run(
-        self,
-        n: int = 100,
-        m: int = 100,
-        seed: int = 1,
-        distributed_executor_address: Optional[str] = None,
-        **kwargs
-    ) -> List[Path]:
+    def run(self, n: int = 100, m: int = 100, seed: int = 1, **kwargs) -> List[Path]:
         """
         Generates n random arrays of shape (m, m) and saves them to /matrices
 
@@ -52,9 +45,6 @@ class MappedRaw(Step):
             Default: 100 (100 x 100)
         seed: int
             Seed for numpy's random number generator
-        distributed_executor_address: Optional[str]
-            An optional string URL to a Dask executor.
-            Default: None (Create local dask executor)
 
         Returns
         -------
@@ -68,14 +58,13 @@ class MappedRaw(Step):
         matrices_dir = self.step_local_staging_dir / "matrices"
 
         # Connect to an executor
-        exe = DaskExecutor(distributed_executor_address)
-        with exe.start() as client:
+        with worker_client() as client:
             # Create random arrays
             futures = client.map(
                 self._generate_array,
                 range(n),
                 [m for i in range(n)],  # Must have an arg for every n
-                [matrices_dir for i in range(n)]  # Must have an arg for every n
+                [matrices_dir for i in range(n)],  # Must have an arg for every n
             )
 
             # Blocking until all are done

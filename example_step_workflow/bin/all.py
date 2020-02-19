@@ -15,6 +15,7 @@ from prefect import Flow
 from prefect.engine.executors import DaskExecutor, LocalExecutor
 
 from example_step_workflow import steps
+import os
 
 ###############################################################################
 
@@ -76,7 +77,16 @@ class All:
         if debug:
             exe = LocalExecutor()
         else:
-            exe = DaskExecutor()
+            if distributed_executor_address is not None:
+                exe = DaskExecutor(distributed_executor_address)
+            else:
+                # Stop conflicts between Dask and OpenBLAS
+                # Info here:
+                # https://stackoverflow.com/questions/45086246/too-many-memory-regions-error-with-dask
+                os.environ["OMP_NUM_THREADS"] = "1"
+
+                # Start local dask cluster
+                exe = DaskExecutor()
 
         # Configure your flow
         with Flow("example_step_workflow") as flow:

@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from datastep import Step, log_run_params
-from prefect.engine.executors import DaskExecutor
+from distributed import worker_client
 
 from ..mapped_raw import MappedRaw
 
@@ -53,7 +53,6 @@ class MappedInvert(Step):
         self,
         matrices: Optional[Union[Union[str, Path], List[Path]]] = None,
         filepath_column: str = "filepath",
-        distributed_executor_address: Optional[str] = None,
         **kwargs
     ) -> List[Path]:
         """
@@ -72,9 +71,6 @@ class MappedInvert(Step):
         filepath_column: str
             If providing a path to a csv manifest, the column to use for matrices.
             Default: "filepath"
-        distributed_executor_address: Optional[str]
-            An optional string URL to a Dask executor.
-            Default: None (Create local dask executor)
 
         Returns
         -------
@@ -100,13 +96,12 @@ class MappedInvert(Step):
         inverted_dir = self.step_local_staging_dir / "inverted"
 
         # Connect to an executor
-        exe = DaskExecutor(distributed_executor_address)
-        with exe.start() as client:
+        with worker_client() as client:
             # Create random arrays
             futures = client.map(
                 self._invert_array,
                 matrices,
-                [inverted_dir for i in range(len(matrices))]
+                [inverted_dir for i in range(len(matrices))],
             )
 
             # Blocking until all are done

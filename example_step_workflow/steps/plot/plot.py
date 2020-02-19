@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from ..sum import Sum
 
-matplotlib.use('agg')
+matplotlib.use("agg")
 plt.style.use("seaborn-whitegrid")
 
 
