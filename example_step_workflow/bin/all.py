@@ -9,13 +9,16 @@ and configure their IO in the `run` function.
 """
 
 import logging
-from typing import Optional
+import os
+from datetime import datetime
+from pathlib import Path
 
+from dask_jobqueue import SLURMCluster
+from distributed import LocalCluster
 from prefect import Flow
-from prefect.engine.executors import DaskExecutor, LocalExecutor
+from prefect.engine.executors import DaskExecutor
 
 from example_step_workflow import steps
-import os
 
 ###############################################################################
 
@@ -39,7 +42,7 @@ class All:
 
     def run(
         self,
-        distributed_executor_address: Optional[str] = None,
+        distributed: bool = False,
         clean: bool = False,
         debug: bool = False,
         **kwargs,
@@ -49,8 +52,9 @@ class All:
 
         Parameters
         ----------
-        distributed_executor_address: Optional[str]
-            An optional executor address to pass to some computation engine.
+        distributed: bool
+            Create a SLURMCluster to use for job distribution.
+            Default: False (do not create a cluster)
         clean: bool
             Should the local staging directory be cleaned prior to this run.
             Default: False (Do not clean)
@@ -74,19 +78,40 @@ class All:
         plot = steps.Plot()
 
         # Choose executor
-        if debug:
-            exe = LocalExecutor()
-        else:
-            if distributed_executor_address is not None:
-                exe = DaskExecutor(distributed_executor_address)
-            else:
-                # Stop conflicts between Dask and OpenBLAS
-                # Info here:
-                # https://stackoverflow.com/questions/45086246/too-many-memory-regions-error-with-dask
-                os.environ["OMP_NUM_THREADS"] = "1"
+        if distributed:
+            # Log dir settings
+            log_dir_name = datetime.now().isoformat().split(".")[0]  # Do not include ms
+            log_dir = Path(f".logs/{log_dir_name}/")
+            log_dir.mkdir(parents=True)
 
-                # Start local dask cluster
-                exe = DaskExecutor()
+            # Spawn cluster
+            cluster = SLURMCluster(
+                cores=2,
+                memory="4GB",
+                walltime="01:00:00",
+                queue="aics_cpu_general",
+                local_directory=str(log_dir),
+                log_directory=str(log_dir),
+            )
+
+            # Set adaptive scaling
+            cluster.adapt(minimum_jobs=1, maximum_jobs=40)
+
+        else:
+            # Stop conflicts between Dask and OpenBLAS
+            # Info here:
+            # https://stackoverflow.com/questions/45086246/too-many-memory-regions-error-with-dask
+            os.environ["OMP_NUM_THREADS"] = "1"
+
+            # Spawn local cluster
+            cluster = LocalCluster()
+
+        # Log bokeh info
+        if cluster.dashboard_link:
+            log.info(f"Dask UI running at: {cluster.dashboard_link}")
+
+        # Start local dask cluster
+        exe = DaskExecutor(cluster.scheduler_address)
 
         # Configure your flow
         with Flow("example_step_workflow") as flow:
@@ -95,26 +120,26 @@ class All:
             # If you want to utilize some debugging functionality pass debug
             # If you don't utilize any of these, just pass the parameters you need.
             matrices = raw(
-                distributed_executor_address=distributed_executor_address,
+                distributed_executor_address=cluster.scheduler_address,
                 clean=clean,
                 debug=debug,
                 **kwargs,  # Allows us to pass `--n {some integer}` or other params
             )
             inversions = invert(
                 matrices,
-                distributed_executor_address=distributed_executor_address,
+                distributed_executor_address=cluster.scheduler_address,
                 clean=clean,
                 debug=debug,
             )
             vectors = cumsum(
                 inversions,
-                distributed_executor_address=distributed_executor_address,
+                distributed_executor_address=cluster.scheduler_address,
                 clean=clean,
                 debug=debug,
             )
             plot(
                 vectors,
-                distributed_executor_address=distributed_executor_address,
+                distributed_executor_address=cluster.scheduler_address,
                 clean=clean,
                 debug=debug,
             )
@@ -124,6 +149,10 @@ class All:
 
         # Get plot location
         log.info(f"Plot stored to: {plot.get_result(state, flow)}")
+
+        # Close cluster
+        if distributed:
+            cluster.close()
 
     def pull(self):
         """

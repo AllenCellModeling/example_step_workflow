@@ -44,12 +44,15 @@ interactive_requirements = [
 ]
 
 requirements = [
+    "bokeh",
     "dask[bag]",
+    "dask_jobqueue",
     "datastep>=0.1.5",
-    "distributed",
+    "distributed>=2.11.0",
     "docutils<0.16",  # needed for botocore (quilt dependency)
     "fire",
     "matplotlib",
+    "msgpack<1.0.0",
     "numpy",
     "pandas",
     "prefect",
@@ -57,22 +60,16 @@ requirements = [
     "seaborn",
 ]
 
-distributed_requirements = [
-    "scheduler_tools==0.1.2",
-]
-
 extra_requirements = {
     "test": test_requirements,
     "setup": setup_requirements,
     "dev": dev_requirements,
     "interactive": interactive_requirements,
-    "distributed": distributed_requirements,
     "all": [
         *requirements,
         *test_requirements,
         *setup_requirements,
         *dev_requirements,
-        *distributed_requirements,
         *interactive_requirements
     ]
 }
