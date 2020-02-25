@@ -6,5 +6,6 @@ from .sum import Sum
 from .plot import Plot
 from .mapped_raw import MappedRaw
 from .mapped_invert import MappedInvert
+from .mapped_sum import MappedSum
 
-__all__ = ["Raw", "Invert", "Sum", "Plot", "MappedRaw", "MappedInvert"]
+__all__ = ["Raw", "Invert", "Sum", "Plot", "MappedRaw", "MappedInvert", "MappedSum"]

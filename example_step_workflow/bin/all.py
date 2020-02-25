@@ -36,7 +36,7 @@ class All:
         self.step_list = [
             steps.MappedRaw(),
             steps.MappedInvert(),
-            steps.Sum(),
+            steps.MappedSum(),
             steps.Plot(),
         ]
 
@@ -74,7 +74,7 @@ class All:
         # Initalize steps
         raw = steps.MappedRaw()
         invert = steps.MappedInvert()
-        cumsum = steps.Sum()
+        cumsum = steps.MappedSum()
         plot = steps.Plot()
 
         # Choose executor
