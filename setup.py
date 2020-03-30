@@ -70,8 +70,8 @@ extra_requirements = {
         *test_requirements,
         *setup_requirements,
         *dev_requirements,
-        *interactive_requirements
-    ]
+        *interactive_requirements,
+    ],
 }
 
 setup(
@@ -87,9 +87,7 @@ setup(
     ],
     description="An example step workflow that does a whole bunch of simple random matrix inversion.",
     entry_points={
-        "console_scripts": [
-            "example_step_workflow=example_step_workflow.bin.cli:cli"
-        ]
+        "console_scripts": ["example_step_workflow=example_step_workflow.bin.cli:cli"]
     },
     install_requires=requirements,
     license="Allen Institute Software License",

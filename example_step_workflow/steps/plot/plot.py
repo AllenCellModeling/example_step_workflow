@@ -14,6 +14,8 @@ from tqdm import tqdm
 
 from ..sum import Sum
 
+from .plot_utils import gradient_fill
+
 matplotlib.use("agg")
 plt.style.use("seaborn-whitegrid")
 
@@ -59,7 +61,7 @@ class Plot(Step):
         plots: List[Path]
             The list of paths to the produced plots.
         """
-        # Default vectprs value
+        # Default vectors value
         if vectors is None:
             vectors = self.step_local_staging_dir.parent / "sum" / "manifest.csv"
 
@@ -78,20 +80,61 @@ class Plot(Step):
         plot_dir = self.step_local_staging_dir / "plots"
         plot_dir.mkdir(exist_ok=True)
 
-        # Plot the vectors
+        # Plot the vectors as black lines
         ax = plt.axes()
+        plot_matrix = np.nan
         for i, vec in tqdm(enumerate(vectors), desc="Plotting vectors"):
             # Load vector
             vec = np.load(vec)
 
+            # check length of vector and make plotting matrix
+            if np.any(np.isnan(plot_matrix)):
+                n = len(vectors)
+                m = len(vec)
+                plot_matrix = np.zeros([n, m])
+
+            # fill plotting matrix
+            plot_matrix[i, :] = vec
+
             # Append ax
-            ax.plot(vec)
+            ax.plot(vec, color="r")
+
+        # set axes limits
+        plt.xlim(1, m)
+        plt.ylim(0, np.amax(plot_matrix))
 
         # Configure manifest dataframe for storage tracking
         self.manifest = pd.DataFrame(index=range(1), columns=["filepath"])
 
         # Configure save path and save
         plot_save_path = plot_dir / f"plot.png"
+        plt.savefig(plot_save_path, format="png")
+
+        # Plot the vectors in a fancy way
+        plot_matrix = plot_matrix[plot_matrix[:, m - 1].argsort()]
+        max_pm = np.amax(plot_matrix)
+
+        # First make matrix
+        ax = plt.axes()
+        cmap = plt.cm.get_cmap("gnuplot")
+        for i in range(n):
+            y = plot_matrix[i, :]
+            max_y = np.amax(y)
+
+            # Fancy plotting
+            x = np.arange(m)
+            lc = cmap(max_y / max_pm)
+            gradient_fill(x, y, lc)
+
+        # set axes limits
+        plt.xlim(1, m)
+        plt.ylim(0, np.amax(plot_matrix))
+
+        # Configure manifest dataframe for storage tracking
+        self.manifest = pd.DataFrame(index=range(1), columns=["filepath"])
+
+        # Configure save path and save
+        plot_save_path = plot_dir / f"plot_fancy.png"
         plt.savefig(plot_save_path, format="png")
 
         # Add the path to manifest
