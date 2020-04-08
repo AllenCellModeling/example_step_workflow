@@ -38,6 +38,7 @@ class All:
             steps.MappedInvert(),
             steps.MappedSum(),
             steps.Plot(),
+            steps.Fancyplot(),
         ]
 
     def run(
@@ -76,6 +77,7 @@ class All:
         invert = steps.MappedInvert()
         cumsum = steps.MappedSum()
         plot = steps.Plot()
+        fancyplot = steps.Fancyplot()
 
         # Choose executor
         if distributed:
@@ -87,8 +89,8 @@ class All:
             # Spawn cluster
             cluster = SLURMCluster(
                 cores=2,
-                memory="4GB",
-                walltime="01:00:00",
+                memory="32GB",
+                walltime="10:00:00",
                 queue="aics_cpu_general",
                 local_directory=str(log_dir),
                 log_directory=str(log_dir),
@@ -138,6 +140,12 @@ class All:
                 debug=debug,
             )
             plot(
+                vectors,
+                distributed_executor_address=cluster.scheduler_address,
+                clean=clean,
+                debug=debug,
+            )
+            fancyplot(
                 vectors,
                 distributed_executor_address=cluster.scheduler_address,
                 clean=clean,

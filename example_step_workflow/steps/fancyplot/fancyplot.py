@@ -14,20 +14,26 @@ from tqdm import tqdm
 
 from ..sum import Sum
 
+from example_step_workflow.steps.fancyplot.plot_utils import gradient_fill
+
 matplotlib.use("agg")
 plt.style.use("seaborn-whitegrid")
-
 
 ###############################################################################
 
 log = logging.getLogger(__name__)
 
+
 ###############################################################################
 
 
-class Plot(Step):
-    def __init__(self, direct_upstream_tasks: List["Step"] = [Sum]):
-        super().__init__(direct_upstream_tasks=direct_upstream_tasks)
+class Fancyplot(Step):
+    def __init__(
+        self,
+        direct_upstream_tasks: List["Step"] = [Sum],
+        config: Optional[Union[str, Path]] = None,
+    ):
+        super().__init__(direct_upstream_tasks=direct_upstream_tasks, config=config)
 
     @log_run_params
     def run(
@@ -37,11 +43,7 @@ class Plot(Step):
         **kwargs,
     ) -> List[Path]:
         """
-        Plot and save the list of vectors provided.
-
-        If running in the command line, this will lookup the prior step's produced
-        manifest for vector retrieval. If running in the workflow, uses the direct
-        output of the prior step.
+        Run a pure function.
 
         Parameters
         ----------
@@ -75,11 +77,10 @@ class Plot(Step):
             vectors = [Path(f) for f in raw_data[filepath_column]]
 
         # Storage dir
-        plot_dir = self.step_local_staging_dir / "plots"
+        plot_dir = self.step_local_staging_dir / "fancyplots"
         plot_dir.mkdir(exist_ok=True)
 
-        # Plot the vectors as red lines
-        fig_line, ax_line = plt.subplots()  # the first figure, normal line plot
+        # First make matrix from plotting vectors
         plot_matrix = np.nan
         for i, vec in tqdm(enumerate(vectors), desc="Plotting vectors"):
             # Load vector
@@ -94,11 +95,24 @@ class Plot(Step):
             # fill plotting matrix
             plot_matrix[i, :] = vec
 
-            # Append axPlot
-            ax_line.plot(vec, color="r")
+        # reorder the matrix
+        plot_matrix = plot_matrix[plot_matrix[:, m - 1].argsort()]
+        max_pm = np.amax(plot_matrix)
+
+        # Plot the vectors as fancy fills
+        fig_fill, ax_fill = plt.subplots()  # the second figure, fancy fill plot
+        cmap = plt.cm.get_cmap("gnuplot")
+        for i in range(n):
+            y = plot_matrix[i, :]
+            max_y = np.amax(y)
+
+            # Fancy plotting
+            x = np.arange(m)
+            lc = cmap(max_y / max_pm)
+            gradient_fill(x, y, lc, ax=ax_fill)
 
         # set axes limits
-        plt.sca(ax_line)
+        plt.sca(ax_fill)
         plt.xlim(1, m)
         plt.ylim(0, np.amax(plot_matrix))
 
@@ -106,8 +120,8 @@ class Plot(Step):
         self.manifest = pd.DataFrame(index=range(1), columns=["filepath"])
 
         # Configure save path and save
-        plot_save_path = plot_dir / f"plot.png"
-        plt.sca(ax_line)
+        plot_save_path = plot_dir / f"plot_fancy.png"
+        plt.sca(ax_fill)
         plt.savefig(plot_save_path, format="png")
 
         # Add the path to manifest
