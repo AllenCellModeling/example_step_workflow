@@ -189,3 +189,28 @@ class All:
         """
         for step in self.step_list:
             step.clean()
+
+
+
+
+class PandasParquetSerializer(Serializer):
+
+    def serialize(self, value: pd.DataFrame) -> bytes:
+        b = BytesIO()
+        value.to_parquet(b)
+        return b.getvalue()
+
+    def deserialize(self, value: bytes) -> pd.DataFrame:
+        return pd.read_parquet(value)
+
+
+class NumpySerializer(Serializer):
+
+    def serialize(self, value: np.ndarray) -> bytes:
+        b = BytesIO()
+        np.save(b, value, allow_pickle=True)
+        return b.getvalue()
+
+    def deserialize(self, value: bytes) -> np.ndarray:
+        b = BytesIO(value)
+        return np.load(b, allow_pickle=True)

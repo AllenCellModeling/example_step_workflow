@@ -56,6 +56,7 @@ requirements = [
     "numpy",
     "pandas",
     "prefect",
+    "pyarrow",
     "python-dateutil<=2.8.0",  # need <=2.8.0 for quilt3 in step
     "seaborn",
 ]
