@@ -11,14 +11,24 @@ and configure their IO in the `run` function.
 import logging
 import os
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
+from typing import Any, List, NamedTuple
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from dask_jobqueue import SLURMCluster
 from distributed import LocalCluster
-from prefect import Flow
+from prefect import Flow, task, unmapped
 from prefect.engine.executors import DaskExecutor
+from prefect.engine.results import LocalResult
+from prefect.engine.serializers import Serializer
+from tqdm import tqdm
 
-from example_step_workflow import steps
+matplotlib.use("agg")
+plt.style.use("seaborn-whitegrid")
 
 ###############################################################################
 
@@ -27,19 +37,55 @@ log = logging.getLogger(__name__)
 ###############################################################################
 
 
+class ArrayManager(NamedTuple):
+    index: int
+    arr: np.ndarray
+
+
+@task(
+    result=LocalResult(dir="local_staging/raw/"),
+    target=lambda **kwargs: "{}.npy".format(kwargs["n"]),
+)
+def generate_array(n: int) -> ArrayManager:
+    return ArrayManager(n, np.random.rand(n, n))
+
+
+@task(
+    result=LocalResult(dir="local_staging/inv/"),
+    target=lambda **kwargs: "{}.npy".format(kwargs.get("am").index),
+)
+def invert_array(am: ArrayManager) -> ArrayManager:
+    return ArrayManager(am.index, np.linalg.inv(am.arr))
+
+
+@task(
+    result=LocalResult(dir="local_staging/sum/"),
+    target=lambda **kwargs: "{}.npy".format(kwargs.get("am").index),
+)
+def sum_array(am: ArrayManager) -> ArrayManager:
+    vec = np.amax(am.arr, 0)
+    vec = np.sort(vec)
+    vec = np.cumsum(vec)
+
+    return ArrayManager(am.index, vec)
+
+
+@task
+def basic_plot(ams: List[ArrayManager]):
+    # Plot the vectors as red lines
+    plt.figure(figsize=(10, 10))
+    for i, am in tqdm(enumerate(ams), desc="Plotting vectors"):
+        plt.plot(np.linspace(0, 1, am.arr.shape[0]), am.arr)
+
+    # Save
+    plots = Path("local_staging/plots")
+    plots.mkdir(parents=True, exist_ok=True)
+    plt.savefig(plots / "basic.png", format="png")
+
+
+###############################################################################
+
 class All:
-    def __init__(self):
-        """
-        Set all of your available steps here.
-        This is only used for data logging operations, not running.
-        """
-        self.step_list = [
-            steps.MappedRaw(),
-            steps.MappedInvert(),
-            steps.MappedSum(),
-            steps.Plot(),
-            steps.Fancyplot(),
-        ]
 
     def run(
         self,
@@ -72,13 +118,6 @@ class All:
         Basic prefect example:
         https://docs.prefect.io/core/
         """
-        # Initalize steps
-        raw = steps.MappedRaw()
-        invert = steps.MappedInvert()
-        cumsum = steps.MappedSum()
-        plot = steps.Plot()
-        fancyplot = steps.Fancyplot()
-
         # Choose executor
         if distributed:
             # Log dir settings
@@ -117,50 +156,14 @@ class All:
 
         # Configure your flow
         with Flow("example_step_workflow") as flow:
-            # If your step utilizes a secondary flow with dask pass the executor address
-            # If you want to clean the local staging directories pass clean
-            # If you want to utilize some debugging functionality pass debug
-            # If you don't utilize any of these, just pass the parameters you need.
-            matrices = raw(
-                distributed_executor_address=cluster.scheduler_address,
-                clean=clean,
-                debug=debug,
-                **kwargs,  # Allows us to pass `--n {some integer}` or other params
-            )
-            inversions = invert(
-                matrices,
-                distributed_executor_address=cluster.scheduler_address,
-                clean=clean,
-                debug=debug,
-            )
-            vectors = cumsum(
-                inversions,
-                distributed_executor_address=cluster.scheduler_address,
-                clean=clean,
-                debug=debug,
-            )
-            plot(
-                vectors,
-                distributed_executor_address=cluster.scheduler_address,
-                clean=clean,
-                debug=debug,
-            )
-            fancyplot(
-                vectors,
-                distributed_executor_address=cluster.scheduler_address,
-                clean=clean,
-                debug=debug,
-            )
+            ams = generate_array.map(range(10, 100))
+            ams = invert_array.map(ams)
+            ams = sum_array.map(ams)
+            basic_plot(ams)
 
         # Run flow and get ending state
         state = flow.run(executor=exe)
 
-        # Get plot location
-        log.info(f"Plot stored to: {plot.get_result(state, flow)}")
-
-        # Close cluster
-        if distributed:
-            cluster.close()
 
     def pull(self):
         """
