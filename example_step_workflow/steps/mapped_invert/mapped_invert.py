@@ -24,7 +24,10 @@ class MappedInvert(Step):
         super().__init__(direct_upstream_tasks=direct_upstream_tasks)
 
     @staticmethod
-    def _invert_array(read_path: Path, save_dir: Path) -> Tuple[int, Path]:
+    def _invert_array(read_path: Union[str, Path], save_dir: Path) -> Tuple[int, Path]:
+        if isinstance(read_path, str):
+            read_path = Path(read_path)
+
         # Load matrix
         mat = np.load(read_path)
 

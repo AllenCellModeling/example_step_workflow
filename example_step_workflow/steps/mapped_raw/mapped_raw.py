@@ -73,10 +73,10 @@ class MappedRaw(Step):
         # Configure manifest dataframe for storage tracking
         self.manifest = pd.DataFrame(index=range(n), columns=["filepath"])
         for i, path in array_infos:
-            self.manifest.at[i, "filepath"] = path
+            self.manifest.at[i, "filepath"] = str(path)
 
         # Save the manifest
-        self.manifest.to_csv(self.step_local_staging_dir / "manifest.csv", index=False)
+        self.manifest.to_parquet(self.step_local_staging_dir / "manifest.parquet")
 
         # Return list of paths
         return list(self.manifest["filepath"])
