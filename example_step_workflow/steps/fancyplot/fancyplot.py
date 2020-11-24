@@ -120,7 +120,7 @@ class Fancyplot(Step):
         self.manifest = pd.DataFrame(index=range(1), columns=["filepath"])
 
         # Configure save path and save
-        plot_save_path = plot_dir / f"plot_fancy.png"
+        plot_save_path = plot_dir / "plot_fancy.png"
         plt.sca(ax_fill)
         plt.savefig(plot_save_path, format="png")
 

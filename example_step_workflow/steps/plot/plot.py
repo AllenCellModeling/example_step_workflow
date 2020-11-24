@@ -106,7 +106,7 @@ class Plot(Step):
         self.manifest = pd.DataFrame(index=range(1), columns=["filepath"])
 
         # Configure save path and save
-        plot_save_path = plot_dir / f"plot.png"
+        plot_save_path = plot_dir / "plot.png"
         plt.sca(ax_line)
         plt.savefig(plot_save_path, format="png")
 
